@@ -52,7 +52,7 @@
       containers.podman.podman_container:
         name: rungard-backend
         image: ghcr.io/agneswd/test-backend:v1.1
-        state: started
+        state: created
         label:
           io.containers.autoupdate: registry
         generate_systemd:
