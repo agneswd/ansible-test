@@ -19,7 +19,7 @@
     - name: Deploy Backend Container
       containers.podman.podman_container:
         name: rungard-backend
-        image: ghcr.io/<username>/rungard-backend:v1.0
+        image: ghcr.io/agneswd/test-backend:v1.0
         state: started
         label:
           io.containers.autoupdate: registry
