@@ -51,7 +51,7 @@
       become_user: "{{ backend_user }}"
       containers.podman.podman_container:
         name: rungard-backend
-        image: ghcr.io/agneswd/test-backend:v1.1
+        image: ghcr.io/agneswd/test-backend:latest
         state: created
         label:
           io.containers.autoupdate: registry
@@ -72,3 +72,40 @@
       loop:
         - container-rungard-backend.service
         - podman-auto-update.timer
+
+   - name: Create ansible-pull systemd service
+      become: yes
+      copy:
+        dest: /etc/systemd/system/ansible-pull.service
+        content: |
+          [Unit]
+          Description=Automated Ansible Pull
+          After=network-online.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/bin/ansible-pull -U https://github.com/agneswd/ansible-test.git -d /tmp/ansible-pull -i localhost, local.yml
+
+    - name: Create ansible-pull systemd timer
+      become: yes
+      copy:
+        dest: /etc/systemd/system/ansible-pull.timer
+        content: |
+          [Unit]
+          Description=Run ansible-pull daily at 2 AM
+
+          [Timer]
+          OnCalendar=*-*-* 02:00:00
+          RandomizedDelaySec=3600
+          Persistent=true
+
+          [Install]
+          WantedBy=timers.target
+
+    - name: Enable and start ansible-pull timer
+      become: yes
+      systemd:
+        name: ansible-pull.timer
+        enabled: yes
+        state: started
+        daemon_reload: yes
