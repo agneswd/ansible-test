@@ -1,6 +1,6 @@
 ---
 - name: Client Side Auto-Setup
-  hosts: localhost
+  hosts: all
   connection: local
   become: yes
 
