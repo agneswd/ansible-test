@@ -3,7 +3,8 @@
   hosts: localhost
   connection: local
   become: yes
-
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
   tasks:
     - name: Install Podman and Avahi
       zypper:
