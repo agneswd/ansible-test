@@ -58,6 +58,7 @@
         generate_systemd:
           path: "/home/{{ backend_user }}/.config/systemd/user/"
           restart_policy: always
+          new: yes
 
     - name: Enable Container and Auto-Update Timer
       become_user: "{{ backend_user }}"
