@@ -1,4 +1,4 @@
 FROM alpine:latest
 RUN apk add --no-cache curl
-CMD ["echo", "Rungard Backend Running"]
-
+# Keeps the container running forever
+CMD ["sleep", "infinity"]

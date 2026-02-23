@@ -5,6 +5,8 @@
   become: yes
   vars:
     ansible_python_interpreter: /usr/bin/python3
+    backend_user: rungard
+
   tasks:
     - name: Install Podman and Avahi
       zypper:
@@ -17,10 +19,56 @@
         state: started
         enabled: yes
 
+    - name: Ensure backend user exists
+      user:
+        name: "{{ backend_user }}"
+        state: present
+        create_home: yes
+
+    - name: Check if lingering is enabled
+      stat:
+        path: "/var/lib/systemd/linger/{{ backend_user }}"
+      register: user_lingering
+
+    - name: Enable systemd lingering for the backend user
+      command: "loginctl enable-linger {{ backend_user }}"
+      when: not user_lingering.stat.exists
+
+    - name: Get backend user UID for systemd DBUS
+      command: "id -u {{ backend_user }}"
+      register: backend_uid
+      changed_when: false
+
+    - name: Ensure user systemd directory exists
+      file:
+        path: "/home/{{ backend_user }}/.config/systemd/user"
+        state: directory
+        owner: "{{ backend_user }}"
+        group: "{{ backend_user }}"
+        mode: '0755'
+
     - name: Deploy Backend Container
+      become_user: "{{ backend_user }}"
       containers.podman.podman_container:
         name: rungard-backend
-        image: ghcr.io/agneswd/test-backend:v1.0
+        image: ghcr.io/agneswd/test-backend:v1.1
         state: started
         label:
           io.containers.autoupdate: registry
+        generate_systemd:
+          path: "/home/{{ backend_user }}/.config/systemd/user/"
+          restart_policy: always
+
+    - name: Enable Container and Auto-Update Timer
+      become_user: "{{ backend_user }}"
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ backend_uid.stdout }}"
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+        scope: user
+        daemon_reload: yes
+      loop:
+        - container-rungard-backend.service
+        - podman-auto-update.timer
