@@ -1,0 +1,25 @@
+---
+- name: Client Side Auto-Setup
+  hosts: localhost
+  connection: local
+  become: yes
+
+  tasks:
+    - name: Install Podman and Avahi
+      zypper:
+        name: [podman, avahi, nss-mdns]
+        state: present
+
+    - name: Ensure Avahi is running (mDNS)
+      systemctl:
+        name: avahi-daemon
+        state: started
+        enabled: yes
+
+    - name: Deploy Backend Container
+      containers.podman.podman_container:
+        name: rungard-backend
+        image: ghcr.io/<username>/rungard-backend:v1.0
+        state: started
+        label:
+          io.containers.autoupdate: registry
