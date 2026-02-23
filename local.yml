@@ -8,6 +8,10 @@
     backend_user: rungard
 
   tasks:
+    - name: Update all system packages
+      zypper:
+        name: '*'
+        state: latest
     - name: Install Podman and Avahi
       zypper:
         name: [podman, avahi, nss-mdns]
